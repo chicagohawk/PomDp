@@ -1,0 +1,185 @@
+\documentclass[a4paper,onecolumn]{article}
+\usepackage{amsmath, amsthm, graphicx, amssymb, wrapfig, fullpage, subfigure, array}
+\usepackage{tikz}
+\usetikzlibrary{positioning,shadows,arrows}
+\usepackage[font=sl, labelfont={sf}, margin=1cm]{caption}
+\DeclareMathOperator{\e}{e}
+\newtheorem{mydef}{Definition}
+
+\begin{document}
+\setcounter{page}{1}
+
+\title{Tiger Problem}
+\maketitle
+
+\noindent State space (tiger lies left, tiger lies right)
+\begin{equation}
+    \left\{S\right\} = \left\{s_0, s_1\right\}
+\end{equation}
+Belief state
+\begin{equation}
+    b = (x, \, 1-x)
+\end{equation}
+Action (listen left; open left, open right)
+\begin{equation}
+    \left\{a\right\} = \left\{a_0; a_1, a_2\right\}
+\end{equation}
+Observation (tiger noise, no tiger noise)
+\begin{equation}
+    \left\{z\right\} = \left\{z_0, z_1\right\}
+\end{equation}
+Belief state transition ($z$ observed)
+\begin{equation}
+    b^\prime (s^\prime)\Big|_{a,b,z} = \frac{1}{p(z|b,a)} \mathbb{P}[z|s^\prime,a]
+	\sum_s\mathbb{P}[s^\prime|s,a]b(s) \equiv b^{a,z}
+\end{equation}
+Belief state transition ($z$ not observed)
+\begin{equation}
+    \mathbb{P}[b^\prime\big|b,a] = \left\{
+	\begin{split}
+		&\sum_z \mathbb{P}[z\big|b,a] =
+		\sum_z\sum_s\mathbb{P}[z\big|s,a]b(s)\;,
+		\quad \textrm{for}\;\forall z \; \textrm{s.t.}\; b^\prime=b^{a,z} \\
+		&0\;,\quad \textrm{if\; no}\; z\; \textrm{satisfies}\; b^\prime=b^{a,z}
+	\end{split}
+	\right.
+\end{equation}
+Value iteration ($k$ indicates value iteration number)
+\begin{equation}
+    V^{k+1}(b) = \max_{a}\left\{
+	    \sum_s r(a,s) b(s) + \gamma \sum_z
+		\max_{\textbf{j}}\left( \sum_{s^\prime} \alpha^{k-1}_\textbf{j}(s^\prime)
+		\mathbb{P}\left[z\big| s^\prime, a\right]
+		\sum_s\mathbb{P}\left[s^\prime\big|s,a\right]b(s)\right)
+	\right\}
+\end{equation}
+$\alpha$-vector pool: $\Gamma^{k}\equiv
+\left\{(\alpha_1,a_{l_1})^k,\cdots,(\alpha_\textbf{j},a_{l_\textbf{j}})^k,\cdots\right\}$\\
+Given $b$, $\alpha$-vector backup:
+\begin{enumerate}
+    \item For $\forall a,\, \forall z$, find
+	\begin{equation}
+	    \alpha^{k-1,*}\big|_{a,z} =
+		\arg\max_{\alpha^{k-1}_\textbf{j}\in\Gamma^{k-1}}
+		\sum_{s^\prime} \alpha^{k-1}_\textbf{j}(s^\prime)
+        \mathbb{P}\left[z\big| s^\prime, a\right]
+        \sum_s\mathbb{P}\left[s^\prime\big|s,a\right]b(s)
+	\end{equation}
+	\item For $\forall a,\, \forall s$, find
+	\begin{equation}
+	    \alpha^k(s)\big|_a = r(a,s) + \gamma \sum_z
+		\sum_{s^\prime} \alpha^{k-1,*}(s^\prime)\big|_{a,z}
+		\mathbb{P}\left[z\big| s^\prime,
+		a\right]\mathbb{P}\left[s^\prime\big|s,a\right]
+	\end{equation}
+	\item Find
+	\begin{equation}
+	    a^* = \arg\max_a \sum_s \alpha^k(s)\big|_a b(s)
+	\end{equation}
+	\item \textbf{[optional]} Append $\alpha$-vector pool (with redundancy)
+	\begin{equation}
+	    \bar{\Gamma}^{k} \leftarrow \left\{\Gamma^{k-1}, (\alpha^k\big|_{a^*},a^*)\right\}
+	\end{equation}
+\end{enumerate}
+
+\begin{mydef}
+    Dominate subset of vectors:\\
+	\emph{Let $\bar{\Gamma}=\left\{\alpha_1,\cdots,\alpha_q\right\}$ 
+	be a set of vectors in $\mathbb{R}^n$, $b$ be a vector
+	in $\mathbb{R}^n$.
+	$\Gamma$ is called the dominate subset of $\bar{\Gamma}$, iff
+	for $\forall \alpha_i\in \Gamma\subseteq \bar{\Gamma}$, 
+	$\exists b$, s.t. 
+	\begin{equation}
+	    \alpha_i^T b > \alpha_{\left\{1,\cdots,q\right\}\setminus i}^Tb
+	\end{equation}
+	subject to
+	\begin{equation}\begin{split}
+	    I_{n\times n}b \geq 0\\
+		\begin{pmatrix}
+		    1, &\cdots, &1
+		\end{pmatrix}
+		b &=1
+	\end{split}\end{equation}
+	}
+\end{mydef}
+\noindent $\Gamma$ can be obtained from $\bar{\Gamma}$ by solving a linear
+programming problem by e.g. simplex method.\\
+To implement point-based value iteration on all $\mathcal{R}^L(b_0)$
+($\mathcal{R}$ indicates reachable belief states, $L$ indicates maximum
+depth)
+\begin{enumerate}
+    \item \textbf{Initialize} Belief tree $T(b_0)$ with maximum depth $L$,
+	consisted of \emph{action nodes} and \emph{belief nodes}.
+	\item \textbf{repeat}
+	\item \hspace{1cm}Choose all belief nodes $b_{l}$ from $T(b_0)$
+	\item \hspace{1cm}For each $b_{l}$, backup $\bar{\Gamma}$
+	\item \hspace{1cm}$\Gamma\leftarrow\bar{\Gamma}$
+	\item \textbf{until} the max increament of $V(b_l)$ is smaller than
+	$\epsilon$
+	\item \textbf{return} $\Gamma$
+\end{enumerate}
+
+\vspace{1cm}
+\noindent Instead of the above approach, consider {Perseus}
+algorithm\\
+\hspace{0.1cm}\\
+\textbf{Perseus Algorithm}
+\begin{enumerate}
+    \item \textbf{initialize}
+	\item \hspace{1cm} Initialize Belief tree $T(b_0)$ with maximum
+	depth $L$
+	\item \hspace{1cm} $B\,\leftarrow$ random subset of non-leaf belief nodes of
+	$T(b_0)$
+	\item \hspace{1cm} Lower bound of $\alpha$-vectors 
+	\begin{equation}
+	    \alpha \leftarrow \frac{\min\left\{r\right\}}{1-\gamma}(1,1)
+	\end{equation}
+	\item \hspace{1cm} Iteration count $k\,\leftarrow\,0$
+	\item \hspace{1cm} $\alpha$-vector pool $\Gamma^0\,\leftarrow\,
+	\left\{\alpha\right\}$
+	\item \textbf{repeat}
+	\item \hspace{1cm} \textbf{for} $b$ \textbf{in} $B$ \textbf{:}
+	\item \hspace{2cm} Store
+	$\alpha^k(b)\,\leftarrow\,\arg\max_{\alpha\in\Gamma^k} \left<\alpha,
+	b\right>$
+	\item \hspace{2cm} Store $V^k(b)\,\leftarrow\,\left<\alpha^k(b),b\right>$
+	\item \hspace{1cm} $\Gamma^{k+1}\,\leftarrow\,\varnothing$
+	\item \hspace{1cm} Not-improved belief points $\tilde{B}\,\leftarrow\, B$
+	\item \hspace{1cm} \textbf{while} $\tilde{B}$ \textbf{is not} $\varnothing$
+	\textbf{:}
+	\item \hspace{2cm} $b\,\leftarrow$ a random sample from $\tilde{B}$
+	\item \hspace{2cm} $\alpha\,\leftarrow$ backup$(b,\Gamma^k)$
+	\item \hspace{2cm} \textbf{if} $\left<\alpha,b\right> < V^k(b)$
+	\textbf{:}
+	\item \hspace{3cm} $\alpha \,\leftarrow\,\alpha^k(b)$
+	\item \hspace{2cm} \textbf{for} $b^\prime$ \textbf{in} $\tilde{B}$
+	\textbf{:}
+	\item \hspace{3cm} \textbf{if} $\left<\alpha,b^\prime\right>\ge
+	V^k(b^\prime)$ \textbf{:}
+	\item \hspace{4cm} $\tilde{B}\,\leftarrow\,\tilde{B}\setminus
+	b^\prime$
+	\item \hspace{2cm} $\Gamma^{k+1}\,\leftarrow\,\Gamma^{k+1}\cup \alpha$
+	\item \hspace{1cm} $k\,\leftarrow\,k+1$
+	\item \textbf{until} convergence
+
+\end{enumerate}
+
+\section{Continuous poMDP}
+Bellman equation
+\begin{equation}
+    V(b) = \sup_{a\in A}\left\{
+	\left<r_a, b\right> + \gamma
+	\int_z \mathbb{P}[z\big|b,a]V\left(b^{a,z}\right) \textrm{d}z
+	\right\}
+\end{equation}
+
+\end{document}
+
+
+
+
+
+
+
+

@@ -1,0 +1,99 @@
+\documentclass[a4paper,onecolumn]{article}
+\usepackage{amsmath, amsthm, graphicx, amssymb, wrapfig, fullpage, subfigure, array}
+\usepackage[font=sl, labelfont={sf}, margin=1cm]{caption}
+\DeclareMathOperator{\e}{e}
+\begin{document}
+\setcounter{page}{1}
+
+\noindent Consider a controllable, continuous LTI system with an observation model
+\begin{equation}
+  \left\{
+    \begin{split}
+      \dot{x} &= A(\xi)x + B(\xi)u\\
+	  y &= Cx
+	\end{split}
+  \right.
+\end{equation}
+with initial condition $x(0) = \textbf{0}$.
+$x\in \mathbb{R}^n$, $y\in \mathbb{R}^m$, $m<n$. For a ``true'' case,
+$\xi$ is fixed but unknown. At time $0$, it is modeled by a set of
+samples $\xi^1, \cdots, \xi^N$.\\
+Minimize an objective function:
+\begin{equation}
+    J_T = \int_0^T |x(\tau)-x_0(\tau)|^2 + \lambda|u(\tau)|^2\textrm{d}\tau
+\end{equation}
+At time $0$, a myopic optimal control does not consider the observation
+model. 
+\begin{equation}
+    u^* = \arg\min_u \frac{1}{N}\sum_i J_T\left(x(u,\xi^i;\textbf{0}), u
+    \right)
+\end{equation}
+To improve upon the myopic approach, we use and only use the observation
+$y(\frac{T}{2})$.
+Define 
+\begin{equation}\begin{split}
+    \alpha^* &\equiv u^* \quad \textrm{for} \;t \in [0,\frac{T}{2}]\\
+	\beta^* &\equiv u^* \quad \textrm{for} \;t \in [\frac{T}{2}, T]
+\end{split}\end{equation}
+and
+\begin{equation}
+    J_{T} \equiv J_{\alpha} + J_{\beta}
+\end{equation}
+The prediction for the observation at $\xi^i$ and $\frac{T}{2}$ is
+\begin{equation}
+    y^i = C \int_0^\frac{T}{2}
+	\exp\left\{A(\xi^i)\left(\frac{T}{2}-\tau\right)\right\}B(\xi^i)\alpha(\tau)\textrm{d}\tau
+\end{equation}
+Means
+\begin{equation}\begin{split}
+    \bar{y} &= \frac{1}{N}\sum_iy^i\\
+	\bar{\xi} &= \frac{1}{N}\xi^i
+\end{split}\end{equation}
+Covariances
+\begin{equation}\begin{split}
+    Q_{yy} &= \frac{1}{N}\sum_i\left(y^i - \bar{y}\right) \left(y^i -
+	\bar{y}\right)^T\\
+	Q_{\xi y} &= \frac{1}{N}\sum_i \left(\xi^i-\bar{\xi}\right)
+	\left(y^i - \bar{y}\right)^T
+\end{split}\end{equation}
+At $\frac{T}{2}$, if $\xi^i$ were the true case, update $\xi^j$'s as
+\begin{equation}\begin{split}
+    \Delta \xi^j_i &= Q_{\xi y} Q^{-1}_{yy}\left(y^i - y^j\right)\\
+	\xi^j &\leftarrow \xi^j + \Delta \xi^j_i
+\end{split}\end{equation}
+Compute
+\begin{equation}\begin{split}
+    &\frac{\partial \Delta \xi_i^j}{\partial \alpha} =
+	\frac{\partial}{\partial \alpha} \left(Q_{\xi y}Q_{yy}^{-1}\right)
+	(y^i-y^j) \\+ &Q_{\xi y}Q_{yy}^{-1} C
+	\left(
+	\exp\left\{A(\xi^i)(\frac{T}{2}-\tau))\right\}B(\xi^i) -
+	\exp\left\{A(\xi^j)(\frac{T}{2}-\tau))\right\}B(\xi^j)
+	\right)
+\end{split}\end{equation}
+Also compute
+\begin{equation}
+       \frac{\partial J_\alpha}{\partial \alpha}
+\end{equation}
+and
+\begin{equation}
+    x_{\frac{T}{2}}(\xi^i, \alpha^*)\quad\textrm{and}\quad 
+    \frac{\partial}{\partial \alpha} x_{\frac{T}{2}}(\xi^i)
+\end{equation}
+Compute a new optimal control for $[\frac{T}{2},T]$
+\begin{equation}
+    \beta^{**} = \arg\min_\beta \frac{1}{N^2}\sum_{i}\sum_j J_\beta
+	\left(
+	x(\beta,\xi^j+\Delta \xi^j_i; x_{\frac{T}{2}}(\xi^i, \alpha^*)),
+	\beta
+	\right)
+\end{equation}
+\end{document}
+
+
+
+
+
+
+
+
